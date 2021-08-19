@@ -4,8 +4,10 @@ import signal
 import sys
 import time
 import random
+import requests
 import discord
 from discord.ext import tasks 
+from shutil import which
 
 def signal_handler(sig, frame):
     print('\033[?1049l')
@@ -31,14 +33,21 @@ async def loop_task():
     channel = client.get_channel(877946391647903876)
 
     print('\033[2J\033[3J\033[1;1HLoading...')
-    response = subprocess.check_output(['curl', '-s',
-        "https://api.nvidia.partners/edge/product/search?page=1&limit=9&locale=en-gb&category=GPU&manufacturer=NVIDIA&manufacturer_filter=NVIDIA~6,3XS%20SYSTEMS~0,ACER~0,AORUS~4,ASUS~43,DELL~0,EVGA~18,GAINWARD~1,GIGABYTE~48,HP~0,INNO3D~6,LENOVO~0,MSI~31,NOVATECH~0,PALIT~17,PC%20SPECIALIST~0,PNY~4,RAZER~0,ZOTAC~21",
-        "-H",
-        "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0",
-        "-H",
-        "Accept-Language: en-GB,en-US;q=0.7,en;q=0.3",
-        "--compressed"
-    ], shell=False)
+
+    # using curl seems to get blocked less often
+    if which("curl") is not None:
+        response = subprocess.check_output(['curl', '-s',
+            "https://api.nvidia.partners/edge/product/search?page=1&limit=9&locale=en-gb&category=GPU&manufacturer=NVIDIA&manufacturer_filter=NVIDIA~6,3XS%20SYSTEMS~0,ACER~0,AORUS~4,ASUS~43,DELL~0,EVGA~18,GAINWARD~1,GIGABYTE~48,HP~0,INNO3D~6,LENOVO~0,MSI~31,NOVATECH~0,PALIT~17,PC%20SPECIALIST~0,PNY~4,RAZER~0,ZOTAC~21",
+            "-H",
+            "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0",
+            "-H",
+            "Accept-Language: en-GB,en-US;q=0.7,en;q=0.3",
+            "--compressed"
+            ], shell=False)
+    else:
+        url = "https://api.nvidia.partners/edge/product/search?page=1&limit=9&locale=en-gb&category=GPU&manufacturer=NVIDIA&manufacturer_filter=NVIDIA~6,3XS%20SYSTEMS~0,ACER~0,AORUS~4,ASUS~43,DELL~0,EVGA~18,GAINWARD~1,GIGABYTE~48,HP~0,INNO3D~6,LENOVO~0,MSI~31,NOVATECH~0,PALIT~17,PC%20SPECIALIST~0,PNY~4,RAZER~0,ZOTAC~21"
+        headers = {"User-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:90.0) Gecko/20100101 Firefox/90.0",}
+        response = requests.get(url, headers = headers).content
 
     responseData = response.decode('utf8').replace("'", '"')
     jsonDict = json.loads(responseData)

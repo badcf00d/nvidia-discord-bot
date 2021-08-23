@@ -6,6 +6,7 @@ import time
 import random
 import requests
 import discord
+import asyncio
 from discord.ext import tasks 
 from shutil import which
 
@@ -14,10 +15,17 @@ prevProducts = {}
 #
 # User Interface stuff
 #
-def signal_handler():
+async def signal_handler():
+    channel = client.get_channel(877946391647903876)
     print('\033[?1049l')
-    sys.exit(0)
-signal.signal(signal.SIGINT, signal_handler)
+    print("Logging out and closing")
+    try:
+        await channel.send("Bot closing ")
+    except Exception:
+        pass
+    await client.close()
+    asyncio.get_event_loop().stop()
+    
 print('\033[?1049h')
 
 
@@ -32,6 +40,10 @@ start = time.time()
 @client.event
 async def on_ready():
     print("Logged in as {0.user}".format(client))
+    for signame in ('SIGINT', 'SIGTERM'):
+        client.loop.add_signal_handler(getattr(signal, signame),
+                                lambda: asyncio.ensure_future(signal_handler()))
+
     loop_task.start()
     channel = client.get_channel(877946391647903876)
     await channel.send("Hello!")

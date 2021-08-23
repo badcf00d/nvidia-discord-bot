@@ -11,6 +11,7 @@ from discord.ext import tasks
 from shutil import which
 
 prevProducts = {}
+lastResponse = 0
 
 #
 # User Interface stuff
@@ -52,13 +53,39 @@ async def on_ready():
 async def loop_task():
     await check_stock()
 
+@client.event
+async def on_message(message):
+    global prevProducts, lastResponse
+    channel = client.get_channel(877946391647903876)
+
+    if message.author != client.user:
+        if prevProducts == {}:
+            try:
+                await channel.send("Not checked Nvidia yet")
+            except Exception as e:
+                print("Reply failed: " + e)
+        else:
+            reply = "Last response: " + time.ctime(lastResponse) + '\n'
+            for product in prevProducts:
+                reply += product["displayName"] + ' '
+                reply += product["prdStatus"] + ' '
+                reply += product["retailers"][0]["purchaseLink"] + '\n'
+
+            try:
+                await channel.send(reply)
+            except Exception as e:
+                print("Reply failed: " + e)
+
+
+
+
 
 
 #
 # Stock checking stuff
 #
 async def check_stock():
-    global prevProducts
+    global prevProducts, lastResponse
     channel = client.get_channel(877946391647903876)
     print('\033[2J\033[3J\033[1;1HLoading...')
 
@@ -107,6 +134,7 @@ async def check_stock():
         print(product["retailers"][0]["purchaseLink"])
 
     prevProducts = products
+    lastResponse = time.time()
     randTime = round(10 + random.uniform(0, 10))
     loop_task.change_interval(seconds = randTime)
     print('\033[1G\033[2K' + f"{randTime}", end=' ', flush=True)

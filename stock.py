@@ -10,9 +10,10 @@ import asyncio
 from discord.ext import tasks 
 from shutil import which
 
+TOKEN = open("token.txt","r").readline()
+CHANNEL_ID = int(open("channel.txt","r").readline())
 prevProducts = {}
 lastResponse = 0
-TOKEN = open("token.txt","r").readline()
 client = discord.Client()
 
 
@@ -21,7 +22,7 @@ client = discord.Client()
 # User Interface stuff
 #
 async def signal_handler():
-    channel = client.get_channel(877946391647903876)
+    channel = client.get_channel(CHANNEL_ID)
     print('\033[?1049l')
     print("Logging out and closing")
     try:
@@ -32,6 +33,7 @@ async def signal_handler():
     asyncio.get_event_loop().stop()
     
 print('\033[?1049h')
+
 
 
 
@@ -46,7 +48,7 @@ async def on_ready():
                                 lambda: asyncio.ensure_future(signal_handler()))
 
     loop_task.start()
-    channel = client.get_channel(877946391647903876)
+    channel = client.get_channel(CHANNEL_ID)
     await channel.send("Hello!")
 
 @tasks.loop(seconds = 10)
@@ -56,7 +58,7 @@ async def loop_task():
 @client.event
 async def on_message(message):
     global prevProducts, lastResponse
-    channel = client.get_channel(877946391647903876)
+    channel = client.get_channel(CHANNEL_ID)
 
     if message.author != client.user:
         if prevProducts == {}:
@@ -75,8 +77,6 @@ async def on_message(message):
                 await channel.send(reply)
             except Exception as e:
                 print("Reply failed: " + e)
-
-
 
 
 
@@ -116,7 +116,7 @@ async def parse_response(response, channel):
 
 async def check_stock():
     global prevProducts, lastResponse
-    channel = client.get_channel(877946391647903876)
+    channel = client.get_channel(CHANNEL_ID)
     print('\033[2J\033[3J\033[1;1HLoading...')
 
     try:

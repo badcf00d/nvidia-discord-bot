@@ -1,7 +1,6 @@
 import subprocess
 import json
 import signal
-import sys
 import time
 import random
 import requests
@@ -9,9 +8,10 @@ import discord
 import asyncio
 from discord.ext import tasks 
 from shutil import which
+from pathlib import Path
 
-TOKEN = open("token.txt","r").readline()
-CHANNEL_ID = int(open("channel.txt","r").readline())
+TOKEN = open(Path(__file__).with_name("token.txt"),"r").readline()
+CHANNEL_ID = int(open(Path(__file__).with_name("channel.txt"),"r").readline())
 prevProducts = {}
 lastResponse = 0
 client = discord.Client()

@@ -12,6 +12,10 @@ from shutil import which
 
 prevProducts = {}
 lastResponse = 0
+TOKEN = open("token.txt","r").readline()
+client = discord.Client()
+
+
 
 #
 # User Interface stuff
@@ -34,10 +38,6 @@ print('\033[?1049h')
 #
 # Discord stuff
 #
-TOKEN = open("token.txt","r").readline()
-client = discord.Client()
-start = time.time()
-
 @client.event
 async def on_ready():
     print("Logged in as {0.user}".format(client))
@@ -84,6 +84,36 @@ async def on_message(message):
 #
 # Stock checking stuff
 #
+async def parse_response(response, channel):
+    responseData = response.decode('utf8').replace("'", '"')
+    jsonDict = json.loads(responseData)
+
+    featured = jsonDict["searchedProducts"]["featuredProduct"]
+    products = jsonDict["searchedProducts"]["productDetails"]
+    products.append(featured)
+    print('\033[1;1H\033[2K')
+
+    for i, product in enumerate(products):
+        print(product["displayName"], end=' ')
+
+        if product["prdStatus"] == 'out_of_stock':
+            print('\033[31m' + product["prdStatus"] + '\033[0m', end=' ')
+        else:
+            print('\033[32;5m' + product["prdStatus"] + '\033[0m', end=' ')
+
+            if prevProducts != {} and product != prevProducts[i]:
+                message = product["displayName"] + ' '
+                message += product["prdStatus"] + ' '
+                message += product["retailers"][0]["purchaseLink"]
+                try:
+                    await channel.send(message)
+                except Exception as e:
+                    print("Stock alert failed: " + e)
+
+        print(product["retailers"][0]["purchaseLink"])
+    return products
+
+
 async def check_stock():
     global prevProducts, lastResponse
     channel = client.get_channel(877946391647903876)
@@ -105,35 +135,15 @@ async def check_stock():
             response = requests.get(url, headers = headers, timeout = 5).content
     except Exception as e:
         print("API request failed " + e)
-        await channel.send("API request failed " + e)
+        try:
+            await channel.send("API request failed " + e)
+        except Exception as e:
+            print("Fail notification failed: " + e)
         randTime = round(60 + random.uniform(0, 10))
         loop_task.change_interval(seconds = randTime)
         return
 
-    responseData = response.decode('utf8').replace("'", '"')
-    jsonDict = json.loads(responseData)
-
-    featured = jsonDict["searchedProducts"]["featuredProduct"]
-    products = jsonDict["searchedProducts"]["productDetails"]
-    products.append(featured)
-    print('\033[1;1H\033[2K')
-
-    for i, product in enumerate(products):
-        print(product["displayName"], end=' ')
-
-        if product["prdStatus"] == 'out_of_stock':
-            print('\033[31m' + product["prdStatus"] + '\033[0m', end=' ')
-        else:
-            print('\033[32;5m' + product["prdStatus"] + '\033[0m', end=' ')
-
-            if prevProducts != {} and product != prevProducts[i]:
-                await channel.send(product["displayName"] + ' ' + 
-                                    product["prdStatus"] + ' ' + 
-                                    product["retailers"][0]["purchaseLink"])
-
-        print(product["retailers"][0]["purchaseLink"])
-
-    prevProducts = products
+    prevProducts = await parse_response(response, channel)
     lastResponse = time.time()
     randTime = round(10 + random.uniform(0, 10))
     loop_task.change_interval(seconds = randTime)

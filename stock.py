@@ -65,7 +65,7 @@ async def on_message(message):
             try:
                 await channel.send("Not checked Nvidia yet")
             except Exception as e:
-                print("Reply failed: " + e)
+                print("Reply failed: " + repr(e))
         else:
             reply = "Last response: " + time.ctime(lastResponse) + '\n'
             for product in prevProducts:
@@ -76,7 +76,7 @@ async def on_message(message):
             try:
                 await channel.send(reply)
             except Exception as e:
-                print("Reply failed: " + e)
+                print("Reply failed: " + repr(e))
 
 
 
@@ -108,7 +108,7 @@ async def parse_response(response, channel):
                 try:
                     await channel.send(message)
                 except Exception as e:
-                    print("Stock alert failed: " + e)
+                    print("Stock alert failed: " + repr(e))
 
         print(product["retailers"][0]["purchaseLink"])
     return products
@@ -134,11 +134,11 @@ async def check_stock():
             headers = {"User-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:90.0) Gecko/20100101 Firefox/90.0",}
             response = requests.get(url, headers = headers, timeout = 5).content
     except Exception as e:
-        print("API request failed " + e)
+        print("API request failed " + repr(e))
         try:
-            await channel.send("API request failed " + e)
+            await channel.send("API request failed " + repr(e))
         except Exception as e:
-            print("Fail notification failed: " + e)
+            print("Fail notification failed: " + repr(e))
         randTime = round(60 + random.uniform(0, 10))
         loop_task.change_interval(seconds = randTime)
         return

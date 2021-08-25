@@ -9,6 +9,16 @@ import asyncio
 from discord.ext import tasks 
 from shutil import which
 from pathlib import Path
+from enum import Enum
+
+class Locale(Enum):
+    UK = 'en-gb'
+    DE = 'de-de'
+    FR = 'fr-fr'
+    PL = 'pl-pl'
+    ES = 'es-es'
+    NL = 'nl-nl'
+currentLocale = Locale.UK
 
 TOKEN = open(Path(__file__).with_name("token.txt"),"r").readline()
 CHANNEL_ID = int(open(Path(__file__).with_name("channel.txt"),"r").readline())
@@ -123,7 +133,7 @@ async def check_stock():
         # using curl seems to get blocked less often
         if which("curl") is not None:
             response = subprocess.check_output(['curl', '-s',
-                "https://api.nvidia.partners/edge/product/search?page=1&limit=9&locale=en-gb&category=GPU&manufacturer=NVIDIA&manufacturer_filter=NVIDIA~6,3XS%20SYSTEMS~0,ACER~0,AORUS~4,ASUS~43,DELL~0,EVGA~18,GAINWARD~1,GIGABYTE~48,HP~0,INNO3D~6,LENOVO~0,MSI~31,NOVATECH~0,PALIT~17,PC%20SPECIALIST~0,PNY~4,RAZER~0,ZOTAC~21",
+                f"https://api.nvidia.partners/edge/product/search?page=1&limit=9&locale={currentLocale.value}&category=GPU&manufacturer=NVIDIA&manufacturer_filter=NVIDIA~6,3XS%20SYSTEMS~0,ACER~0,AORUS~4,ASUS~43,DELL~0,EVGA~18,GAINWARD~1,GIGABYTE~48,HP~0,INNO3D~6,LENOVO~0,MSI~31,NOVATECH~0,PALIT~17,PC%20SPECIALIST~0,PNY~4,RAZER~0,ZOTAC~21",
                 "-H", "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0",
                 "-H", "Accept-Language: en-GB,en-US;q=0.7,en;q=0.3",
                 "--max-time", "5",

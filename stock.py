@@ -79,9 +79,9 @@ async def on_message(message):
         else:
             reply = "Last response: " + time.ctime(lastResponse) + '\n'
             for product in prevProducts:
-                reply += product["displayName"] + ' '
-                reply += product["prdStatus"] + ' '
-                reply += product["retailers"][0]["purchaseLink"] + '\n'
+                reply += get_product_name(product["fe_sku"]) + ' '
+                reply += product["is_active"] + ' '
+                reply += product["product_url"] + '\n'
 
             try:
                 await channel.send(reply)

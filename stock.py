@@ -159,7 +159,7 @@ async def check_stock():
                 "--compressed"
                 ], shell=False)
         else:
-            url = f"https://api.store.nvidia.com/partner/v1/feinventory?skus={currentLocale.value}&locale={currentLocale.value}",
+            url = f"https://api.store.nvidia.com/partner/v1/feinventory?skus={currentLocale.value}~NVGFT090~NVGFT080T~NVGFT080~NVGFT070T~NVGFT070~NVGFT060T~187&locale={currentLocale.value}",
             headers = {"User-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:90.0) Gecko/20100101 Firefox/90.0",}
             response = requests.get(url, headers = headers, timeout = 5).content
     except Exception as e:

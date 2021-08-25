@@ -12,12 +12,12 @@ from pathlib import Path
 from enum import Enum
 
 class Locale(Enum):
-    UK = 'en-gb'
-    DE = 'de-de'
-    FR = 'fr-fr'
-    PL = 'pl-pl'
-    ES = 'es-es'
-    NL = 'nl-nl'
+    UK = 'UK'
+    DE = 'DE'
+    FR = 'FR'
+    PL = 'PL'
+    ES = 'ES'
+    NL = 'NL'
 currentLocale = Locale.UK
 
 TOKEN = open(Path(__file__).with_name("token.txt"),"r").readline()
@@ -94,33 +94,52 @@ async def on_message(message):
 #
 # Stock checking stuff
 #
+def get_product_name(sku):
+    if sku == 'NVGFT090_UK':
+        return 'RTX 3090'
+    elif sku == 'NVGFT080T_UK':
+        return 'RTX 3080Ti'
+    elif sku == 'NVGFT080_UK':
+        return 'RTX 3080'
+    elif sku == 'NVGFT070T_UK':
+        return 'RTX 3070Ti'
+    elif sku == 'NVGFT070_UK':
+        return 'RTX 3070'
+    elif sku == 'NVGFT060T_UK':
+        return 'RTX 3060Ti'
+    else:
+        return sku
+
+
 async def parse_response(response, channel):
     responseData = response.decode('utf8').replace("'", '"')
     jsonDict = json.loads(responseData)
+    products = []
 
-    featured = jsonDict["searchedProducts"]["featuredProduct"]
-    products = jsonDict["searchedProducts"]["productDetails"]
-    products.append(featured)
+    for product in jsonDict["listMap"]:
+        if "NVGFT" in product["fe_sku"]:
+            products.append(product)
     print('\033[1;1H\033[2K')
 
     for i, product in enumerate(products):
-        print(product["displayName"], end=' ')
+        productName = get_product_name(product["fe_sku"])
+        print(productName, end=' ')
 
-        if product["prdStatus"] == 'out_of_stock':
-            print('\033[31m' + product["prdStatus"] + '\033[0m', end=' ')
+        if product["is_active"] == 'false':
+            print('\033[31m' + product["is_active"] + '\033[0m', end=' ')
         else:
-            print('\033[32;5m' + product["prdStatus"] + '\033[0m', end=' ')
+            print('\033[32;5m' + product["is_active"] + '\033[0m', end=' ')
 
             if prevProducts != {} and product != prevProducts[i]:
-                message = product["displayName"] + ' '
-                message += product["prdStatus"] + ' '
-                message += product["retailers"][0]["purchaseLink"]
+                message = productName + ' '
+                message += product["is_active"] + ' '
+                message += product["product_url"]
                 try:
                     await channel.send(message)
                 except Exception as e:
                     print("Stock alert failed: " + repr(e))
 
-        print(product["retailers"][0]["purchaseLink"])
+        print(product["product_url"])
     return products
 
 
@@ -133,14 +152,14 @@ async def check_stock():
         # using curl seems to get blocked less often
         if which("curl") is not None:
             response = subprocess.check_output(['curl', '-s',
-                f"https://api.nvidia.partners/edge/product/search?page=1&limit=9&locale={currentLocale.value}&category=GPU&manufacturer=NVIDIA&manufacturer_filter=NVIDIA~6,3XS%20SYSTEMS~0,ACER~0,AORUS~4,ASUS~43,DELL~0,EVGA~18,GAINWARD~1,GIGABYTE~48,HP~0,INNO3D~6,LENOVO~0,MSI~31,NOVATECH~0,PALIT~17,PC%20SPECIALIST~0,PNY~4,RAZER~0,ZOTAC~21",
+                f"https://api.store.nvidia.com/partner/v1/feinventory?skus={currentLocale.value}~NVGFT090~NVGFT080T~NVGFT080~NVGFT070T~NVGFT070~NVGFT060T~187&locale={currentLocale.value}",
                 "-H", "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0",
                 "-H", "Accept-Language: en-GB,en-US;q=0.7,en;q=0.3",
                 "--max-time", "5",
                 "--compressed"
                 ], shell=False)
         else:
-            url = "https://api.nvidia.partners/edge/product/search?page=1&limit=9&locale=en-gb&category=GPU&manufacturer=NVIDIA&manufacturer_filter=NVIDIA~6,3XS%20SYSTEMS~0,ACER~0,AORUS~4,ASUS~43,DELL~0,EVGA~18,GAINWARD~1,GIGABYTE~48,HP~0,INNO3D~6,LENOVO~0,MSI~31,NOVATECH~0,PALIT~17,PC%20SPECIALIST~0,PNY~4,RAZER~0,ZOTAC~21"
+            url = f"https://api.store.nvidia.com/partner/v1/feinventory?skus={currentLocale.value}&locale={currentLocale.value}",
             headers = {"User-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:90.0) Gecko/20100101 Firefox/90.0",}
             response = requests.get(url, headers = headers, timeout = 5).content
     except Exception as e:

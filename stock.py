@@ -130,7 +130,7 @@ async def parse_response(response, channel):
         else:
             print('\033[32;5m' + product['is_active'] + '\033[0m', end=' ')
 
-            if prevProducts != {} and product != prevProducts[i]:
+            if prevProducts == {} or product != prevProducts[i]:
                 message = productName + ' '
                 message += product['is_active'] + ' '
                 message += product['product_url']

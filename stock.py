@@ -95,17 +95,17 @@ async def on_message(message):
 # Stock checking stuff
 #
 def get_product_name(sku):
-    if sku == 'NVGFT090_UK':
+    if 'NVGFT090_' in sku:
         return 'RTX 3090'
-    elif sku == 'NVGFT080T_UK':
+    elif 'NVGFT080T_' in sku:
         return 'RTX 3080Ti'
-    elif sku == 'NVGFT080_UK':
+    elif 'NVGFT080_' in sku:
         return 'RTX 3080'
-    elif sku == 'NVGFT070T_UK':
+    elif 'NVGFT070T_' in sku:
         return 'RTX 3070Ti'
-    elif sku == 'NVGFT070_UK':
+    elif 'NVGFT070_' in sku:
         return 'RTX 3070'
-    elif sku == 'NVGFT060T_UK':
+    elif 'NVGFT060T_' in sku:
         return 'RTX 3060Ti'
     else:
         return sku

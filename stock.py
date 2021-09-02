@@ -12,13 +12,12 @@ from pathlib import Path
 from enum import Enum
 
 class Locale(Enum):
-    UK = 'UK'
-    DE = 'DE'
-    FR = 'FR'
-    PL = 'PL'
-    ES = 'ES'
-    NL = 'NL'
-currentLocale = Locale.UK
+    UK = 1
+    DE = 2
+    FR = 3
+class Schedule:
+    index = 0
+    list = [Locale.UK.name, Locale.DE.name, Locale.UK.name, Locale.FR.name, None]
 
 TOKEN = open(Path(__file__).with_name('token.txt'),'r').readline()
 CHANNEL_ID = int(open(Path(__file__).with_name('channel.txt'),'r').readline())
@@ -69,16 +68,17 @@ async def loop_task():
 async def on_message(message):
     global prevProducts, lastResponse
     channel = client.get_channel(CHANNEL_ID)
+    currentLocale = Schedule.list[Schedule.index]
 
     if message.author != client.user:
-        if prevProducts == {}:
+        if currentLocale not in prevProducts:
             try:
                 await channel.send('Not checked Nvidia yet')
             except Exception as e:
                 print('Reply failed: ' + repr(e))
         else:
             reply = 'Last response: ' + time.ctime(lastResponse) + '\n'
-            for product in prevProducts:
+            for product in prevProducts[currentLocale]:
                 reply += get_product_name(product['fe_sku']) + ' '
                 reply += product['is_active'] + ' '
                 reply += product['product_url'] + '\n'
@@ -94,6 +94,14 @@ async def on_message(message):
 #
 # Stock checking stuff
 #
+def cycle_locale():
+    nextLocale = Schedule.list[Schedule.index]
+    Schedule.index += 1
+    if Schedule.list[Schedule.index] is None:
+        Schedule.index = 0
+    return nextLocale
+
+
 def get_product_name(sku):
     if 'NVGFT090_' in sku:
         return 'RTX 3090'
@@ -113,6 +121,7 @@ def get_product_name(sku):
 
 async def parse_response(response, channel):
     responseData = response.decode('utf8').replace("'", '"')
+    currentLocale = Schedule.list[Schedule.index]
     jsonDict = json.loads(responseData)
     products = []
 
@@ -130,7 +139,7 @@ async def parse_response(response, channel):
         else:
             print('\033[32;5m' + product['is_active'] + '\033[0m', end=' ')
 
-            if prevProducts == {} or product != prevProducts[i]:
+            if currentLocale not in prevProducts or product != prevProducts[currentLocale][i]:
                 message = productName + ' '
                 message += product['is_active'] + ' '
                 message += product['product_url']
@@ -146,21 +155,24 @@ async def parse_response(response, channel):
 async def check_stock():
     global prevProducts, lastResponse
     channel = client.get_channel(CHANNEL_ID)
+    currentLocale = Schedule.list[Schedule.index]
+
     print('\033[2J\033[3J\033[1;1HLoading...')
 
     try:
         # using curl seems to get blocked less often
         if which('curl') is not None:
             response = subprocess.check_output(['curl', '-s',
-                f'https://api.store.nvidia.com/partner/v1/feinventory?skus={currentLocale.value}~NVGFT090~NVGFT080T~NVGFT080~NVGFT070T~NVGFT070~NVGFT060T~187&locale={currentLocale.value}',
+                f'https://api.store.nvidia.com/partner/v1/feinventory?skus={currentLocale}~NVGFT090~NVGFT080T~NVGFT080~NVGFT070T~NVGFT070~NVGFT060T~187&locale={currentLocale}',
                 '-H', 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0',
                 '-H', 'Accept-Language: en-GB,en-US;q=0.7,en;q=0.3',
                 '--max-time', '10',
                 '--compressed'
                 ], shell=False)
         else:
-            url = f'https://api.store.nvidia.com/partner/v1/feinventory?skus={currentLocale.value}~NVGFT090~NVGFT080T~NVGFT080~NVGFT070T~NVGFT070~NVGFT060T~187&locale={currentLocale.value}',
-            headers = {'User-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:90.0) Gecko/20100101 Firefox/90.0',}
+            url = f'https://api.store.nvidia.com/partner/v1/feinventory?skus={currentLocale}~NVGFT090~NVGFT080T~NVGFT080~NVGFT070T~NVGFT070~NVGFT060T~187&locale={currentLocale}',
+            headers = {'User-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0',
+                       'Accept-Language': 'en-GB,en-US;q=0.7,en;q=0.3'}
             response = requests.get(url, headers = headers, timeout = 10).content
     except Exception as e:
         print('API request failed ' + repr(e))
@@ -172,9 +184,11 @@ async def check_stock():
         loop_task.change_interval(seconds = randTime)
         return
 
-    prevProducts = await parse_response(response, channel)
+    prevProducts[currentLocale] = await parse_response(response, channel)
+    cycle_locale()
     lastResponse = time.time()
-    randTime = round(10 + random.uniform(0, 10))
+
+    randTime = round(10 + random.uniform(0, 7))
     loop_task.change_interval(seconds = randTime)
     print('\033[1G\033[2K' + f'{randTime}', end=' ', flush=True)
 

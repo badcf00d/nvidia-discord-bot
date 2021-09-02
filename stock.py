@@ -71,17 +71,19 @@ async def on_message(message):
     currentLocale = Schedule.list[Schedule.index]
 
     if message.author != client.user:
-        if currentLocale not in prevProducts:
+        if prevProducts == {}:
             try:
                 await channel.send('Not checked Nvidia yet')
             except Exception as e:
                 print('Reply failed: ' + repr(e))
         else:
             reply = 'Last response: ' + time.ctime(lastResponse) + '\n'
-            for product in prevProducts[currentLocale]:
-                reply += get_product_name(product['fe_sku']) + ' '
-                reply += product['is_active'] + ' '
-                reply += product['product_url'] + '\n'
+            for locale, products in prevProducts.items():
+                reply += locale + '\n'
+                for product in products:
+                    reply += get_product_name(product['fe_sku']) + ' '
+                    reply += product['is_active'] + ' '
+                    reply += product['product_url'] + '\n'
 
             try:
                 await channel.send(reply)

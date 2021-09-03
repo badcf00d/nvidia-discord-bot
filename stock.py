@@ -130,19 +130,24 @@ async def parse_response(response, channel):
         productName = get_product_name(product['fe_sku'])
         print(productName, end=' ')
 
-        if product['is_active'] == 'false':
-            print('\033[31m' + product['is_active'] + '\033[0m', end=' ')
+        if product['is_active'].lower() == 'false':
+            print('\033[31m' + product['is_active'].lower() + '\033[0m', end=' ')
         else:
-            print('\033[32;5m' + product['is_active'] + '\033[0m', end=' ')
+            print('\033[32;5m' + product['is_active'].lower() + '\033[0m', end=' ')
 
-            if currentLocale not in prevProducts or product != prevProducts[currentLocale][i]:
-                message = productName + ' '
-                message += product['is_active'] + ' '
-                message += product['product_url']
-                try:
-                    await channel.send(message)
-                except Exception as e:
-                    print('Stock alert failed: ' + repr(e))
+        if ((currentLocale not in prevProducts and product['is_active'].lower() != 'false')
+            or
+            currentLocale in prevProducts and
+            (product['product_url'].lower() != prevProducts[currentLocale][i]['product_url'].lower() or
+            product['is_active'].lower() != prevProducts[currentLocale][i]['is_active'].lower())
+            ):
+            message = productName + ' '
+            message += product['is_active'].lower() + ' '
+            message += product['product_url'].lower()
+            try:
+                await channel.send(message)
+            except Exception as e:
+                print('Stock alert failed: ' + repr(e))
 
         print(product['product_url'])
     return products

@@ -61,8 +61,7 @@ async def on_ready():
                                 lambda: asyncio.ensure_future(signal_handler()))
     for channelId in channelIds:
         channelList.append(Channel(client.get_channel(channelId.id), channelId.locales))
-    for channel in channelList:
-        await channel.id.send('Hello!')
+    await channelList[0].id.send('Hello!')
 
     loop_task.start()
 

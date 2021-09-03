@@ -9,15 +9,10 @@ import asyncio
 from discord.ext import tasks 
 from shutil import which
 from pathlib import Path
-from enum import Enum
 
-class Locale(Enum):
-    UK = 1
-    DE = 2
-    FR = 3
-class Schedule:
+class Locale:
     index = 0
-    list = [Locale.UK.name, Locale.DE.name, Locale.UK.name, Locale.FR.name, None]
+    schedule = ['UK', 'DE', 'UK', 'FR', 'UK', None]
 
 TOKEN = open(Path(__file__).with_name('token.txt'),'r').readline()
 CHANNEL_ID = int(open(Path(__file__).with_name('channel.txt'),'r').readline())
@@ -68,7 +63,6 @@ async def loop_task():
 async def on_message(message):
     global prevProducts, lastResponse
     channel = client.get_channel(CHANNEL_ID)
-    currentLocale = Schedule.list[Schedule.index]
 
     if message.author != client.user:
         if prevProducts == {}:
@@ -97,10 +91,10 @@ async def on_message(message):
 # Stock checking stuff
 #
 def cycle_locale():
-    nextLocale = Schedule.list[Schedule.index]
-    Schedule.index += 1
-    if Schedule.list[Schedule.index] is None:
-        Schedule.index = 0
+    nextLocale = Locale.schedule[Locale.index]
+    Locale.index += 1
+    if Locale.schedule[Locale.index] is None:
+        Locale.index = 0
     return nextLocale
 
 
@@ -123,7 +117,7 @@ def get_product_name(sku):
 
 async def parse_response(response, channel):
     responseData = response.decode('utf8').replace("'", '"')
-    currentLocale = Schedule.list[Schedule.index]
+    currentLocale = Locale.schedule[Locale.index]
     jsonDict = json.loads(responseData)
     products = []
 
@@ -157,7 +151,7 @@ async def parse_response(response, channel):
 async def check_stock():
     global prevProducts, lastResponse
     channel = client.get_channel(CHANNEL_ID)
-    currentLocale = Schedule.list[Schedule.index]
+    currentLocale = Locale.schedule[Locale.index]
 
     print('\033[2J\033[3J\033[1;1HLoading...')
 

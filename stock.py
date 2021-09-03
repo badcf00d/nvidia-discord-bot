@@ -6,36 +6,44 @@ import random
 import requests
 import discord
 import asyncio
-from discord.ext import tasks 
+from discord.ext import tasks
 from shutil import which
 from pathlib import Path
 
 class Locale:
     index = 0
     schedule = ['UK', 'DE', 'UK', 'FR', 'UK', None]
+class Channel:
+    def __init__(self, id, locales):
+        self.id = id
+        self.locales = locales
 
 TOKEN = open(Path(__file__).with_name('token.txt'),'r').readline()
-CHANNEL_ID = int(open(Path(__file__).with_name('channel.txt'),'r').readline())
+
 prevProducts = {}
 lastResponse = 0
 client = discord.Client()
-
+channelIds = []
+channelList = []
+for line in open(Path(__file__).with_name('channels.txt'),'r'):
+    fields = line.split(',')
+    channelIds.append(Channel(int(fields[0]), fields[1]))
 
 
 #
 # User Interface stuff
 #
 async def signal_handler():
-    channel = client.get_channel(CHANNEL_ID)
+    global channelList
     print('\033[?1049l')
     print('Logging out and closing')
     try:
-        await channel.send('Bot closing ')
+        await channelList[0].id.send('Bot closing ')
     except Exception:
         pass
     await client.close()
     asyncio.get_event_loop().stop()
-    
+
 print('\033[?1049h')
 
 
@@ -46,14 +54,17 @@ print('\033[?1049h')
 #
 @client.event
 async def on_ready():
+    global channelList
     print('Logged in as {0.user}'.format(client))
     for signame in ('SIGINT', 'SIGTERM'):
         client.loop.add_signal_handler(getattr(signal, signame),
                                 lambda: asyncio.ensure_future(signal_handler()))
+    for channelId in channelIds:
+        channelList.append(Channel(client.get_channel(channelId.id), channelId.locales))
+    for channel in channelList:
+        await channel.id.send('Hello!')
 
     loop_task.start()
-    channel = client.get_channel(CHANNEL_ID)
-    await channel.send('Hello!')
 
 @tasks.loop(seconds = 10)
 async def loop_task():
@@ -62,7 +73,7 @@ async def loop_task():
 @client.event
 async def on_message(message):
     global prevProducts, lastResponse
-    channel = client.get_channel(CHANNEL_ID)
+    channel = message.channel
 
     if message.author != client.user:
         if prevProducts == {}:
@@ -115,7 +126,8 @@ def get_product_name(sku):
         return sku
 
 
-async def parse_response(response, channel):
+async def parse_response(response):
+    global channelList
     responseData = response.decode('utf8').replace("'", '"')
     currentLocale = Locale.schedule[Locale.index]
     jsonDict = json.loads(responseData)
@@ -135,17 +147,18 @@ async def parse_response(response, channel):
         else:
             print('\033[32;5m' + product['is_active'].lower() + '\033[0m', end=' ')
 
-        if ((currentLocale not in prevProducts and product['is_active'].lower() != 'false')
-            or
+        if ((currentLocale not in prevProducts and product['is_active'].lower() != 'false') or
             currentLocale in prevProducts and
             (product['product_url'].lower() != prevProducts[currentLocale][i]['product_url'].lower() or
-            product['is_active'].lower() != prevProducts[currentLocale][i]['is_active'].lower())
-            ):
+            product['is_active'].lower() != prevProducts[currentLocale][i]['is_active'].lower())):
+
             message = productName + ' '
             message += product['is_active'].lower() + ' '
             message += product['product_url'].lower()
             try:
-                await channel.send(message)
+                for channel in channelList:
+                    if currentLocale in channel.locales:
+                        await channel.id.send(message)
             except Exception as e:
                 print('Stock alert failed: ' + repr(e))
 
@@ -154,8 +167,7 @@ async def parse_response(response, channel):
 
 
 async def check_stock():
-    global prevProducts, lastResponse
-    channel = client.get_channel(CHANNEL_ID)
+    global prevProducts, lastResponse, channelList
     currentLocale = Locale.schedule[Locale.index]
 
     print('\033[2J\033[3J\033[1;1HLoading...')
@@ -178,14 +190,14 @@ async def check_stock():
     except Exception as e:
         print('API request failed ' + repr(e))
         try:
-            await channel.send('API request failed ' + repr(e))
+            await channelList[0].id.send('API request failed ' + repr(e))
         except Exception as e:
             print('Fail notification failed: ' + repr(e))
         randTime = round(60 + random.uniform(0, 10))
         loop_task.change_interval(seconds = randTime)
         return
 
-    prevProducts[currentLocale] = await parse_response(response, channel)
+    prevProducts[currentLocale] = await parse_response(response)
     cycle_locale()
     lastResponse = time.time()
 

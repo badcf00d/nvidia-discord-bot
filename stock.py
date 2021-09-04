@@ -72,12 +72,11 @@ async def loop_task():
 @client.event
 async def on_message(message):
     global prevProducts, lastResponse
-    channel = message.channel
 
-    if message.author != client.user:
+    if message.author != client.user and client.user.mentioned_in(message):
         if prevProducts == {}:
             try:
-                await channel.send('Not checked Nvidia yet')
+                await message.reply('Not checked Nvidia yet')
             except Exception as e:
                 print('Reply failed: ' + repr(e))
         else:
@@ -90,7 +89,7 @@ async def on_message(message):
                     reply += product['product_url'] + '\n'
 
             try:
-                await channel.send(reply)
+                await message.reply(reply)
             except Exception as e:
                 print('Reply failed: ' + repr(e))
 

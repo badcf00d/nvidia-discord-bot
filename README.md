@@ -16,7 +16,7 @@ python3 stock.py
 Just a text file with your bot token on the first line
 
 #### channels.txt
- - Uses the format: `<channel id>,<list of locales, hyphen-seperated>`, e.g:
+ - Uses the format: `<channel id>,<hyphen-seperated list of locales>`, e.g:
  ```
  123123123123123,UK-FR-DE
  234234234234234,UK

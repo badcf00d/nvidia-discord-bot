@@ -151,8 +151,8 @@ async def parse_response(response):
             product['is_active'].lower() != prevProducts[currentLocale][i]['is_active'].lower())):
 
             message = productName + ' '
-            message += product['is_active'].lower() + ' '
-            message += product['product_url'].lower()
+            message += product['is_active'] + ' '
+            message += product['product_url']
             try:
                 for channel in channelList:
                     if currentLocale in channel.locales:

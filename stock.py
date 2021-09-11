@@ -124,6 +124,21 @@ def get_product_name(sku):
         return sku
 
 
+async def send_message(productName, product):
+    global channelList
+    currentLocale = Locale.schedule[Locale.index]
+    message = productName + ' '
+    message += product['is_active'] + ' '
+    message += product['product_url']
+
+    try:
+        for channel in channelList:
+            if currentLocale in channel.locales:
+                await channel.id.send(message)
+    except Exception as e:
+        print('Stock alert failed: ' + repr(e))
+
+
 async def parse_response(response):
     global channelList
     responseData = response.decode('utf8').replace("'", '"')
@@ -138,27 +153,22 @@ async def parse_response(response):
 
     for i, product in enumerate(products):
         productName = get_product_name(product['fe_sku'])
+        url = product['product_url'].lower()
+        state = product['is_active'].lower()
         print(productName, end=' ')
 
-        if product['is_active'].lower() == 'false':
-            print('\033[31m' + product['is_active'].lower() + '\033[0m', end=' ')
+        if state == 'false':
+            print('\033[31m' + state + '\033[0m', end=' ')
         else:
-            print('\033[32;5m' + product['is_active'].lower() + '\033[0m', end=' ')
+            print('\033[32;5m' + state + '\033[0m', end=' ')
 
-        if ((currentLocale not in prevProducts and product['is_active'].lower() != 'false') or
-            currentLocale in prevProducts and
-            (product['product_url'].lower() != prevProducts[currentLocale][i]['product_url'].lower() or
-            product['is_active'].lower() != prevProducts[currentLocale][i]['is_active'].lower())):
-
-            message = productName + ' '
-            message += product['is_active'] + ' '
-            message += product['product_url']
-            try:
-                for channel in channelList:
-                    if currentLocale in channel.locales:
-                        await channel.id.send(message)
-            except Exception as e:
-                print('Stock alert failed: ' + repr(e))
+        if currentLocale in prevProducts:
+            prevUrl = prevProducts[currentLocale][i]['product_url'].lower()
+            prevState = prevProducts[currentLocale][i]['is_active'].lower()
+            if (url != prevUrl or state != prevState):
+                await send_message(productName, product)
+        elif state != 'false':
+            await send_message(productName, product)
 
         print(product['product_url'])
     return products
@@ -199,7 +209,7 @@ async def check_stock():
     cycle_locale()
     lastResponse = time.time()
 
-    randTime = round(10 + random.uniform(0, 7))
+    randTime = round(5 + random.uniform(0, 5))
     loop_task.change_interval(seconds = randTime)
     print('\033[1G\033[2K' + f'{randTime}', end=' ', flush=True)
 

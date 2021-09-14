@@ -127,8 +127,14 @@ def get_product_name(sku):
 async def send_message(productName, product):
     global channelList
     currentLocale = Locale.schedule[Locale.index]
-    message = productName + ' '
-    message += product['is_active'] + ' '
+
+    message = '[' + currentLocale + '] ' + productName + ' '
+    if 'true' in product['is_active']:
+        message += 'In stock: '
+    elif 'false' in product['is_active']:
+        message += 'Out of stock: '
+    else:
+        message += product['is_active'] + ': '
     message += product['product_url']
 
     try:
@@ -165,7 +171,7 @@ async def parse_response(response):
         if currentLocale in prevProducts:
             prevUrl = prevProducts[currentLocale][i]['product_url'].lower()
             prevState = prevProducts[currentLocale][i]['is_active'].lower()
-            if (url != prevUrl or state != prevState):
+            if (state != prevState) or (state != 'false' and (url != prevUrl)):
                 await send_message(productName, product)
         elif state != 'false':
             await send_message(productName, product)

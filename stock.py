@@ -14,8 +14,9 @@ class Locale:
     index = 0
     schedule = ['UK', 'DE', 'UK', 'FR', 'UK', None]
 class Channel:
-    def __init__(self, id, locales):
+    def __init__(self, id, debug, locales):
         self.id = id
+        self.debug = debug
         self.locales = locales
 
 TOKEN = open(Path(__file__).with_name('token.txt'),'r').readline()
@@ -27,7 +28,7 @@ channelIds = []
 channelList = []
 for line in open(Path(__file__).with_name('channels.txt'),'r'):
     fields = line.split(',')
-    channelIds.append(Channel(int(fields[0]), fields[1]))
+    channelIds.append(Channel(int(fields[0]), fields[1].lower() == 'true', fields[2]))
 
 
 #
@@ -38,7 +39,9 @@ async def signal_handler():
     print('\033[?1049l')
     print('Logging out and closing')
     try:
-        await channelList[0].id.send('Bot closing ')
+        for channel in channelList:
+            if channel.debug == True:
+                await channel.id.send('Bot shutting down')
     except Exception:
         pass
     await client.close()
@@ -60,8 +63,15 @@ async def on_ready():
         client.loop.add_signal_handler(getattr(signal, signame),
                                 lambda: asyncio.ensure_future(signal_handler()))
     for channelId in channelIds:
-        channelList.append(Channel(client.get_channel(channelId.id), channelId.locales))
-    await channelList[0].id.send('Hello!')
+        channelList.append(Channel(client.get_channel(channelId.id), channelId.debug, channelId.locales))
+
+    try:
+        for channel in channelList:
+            if channel.debug == True:
+                await channel.id.send('Hello!')
+    except Exception as e:
+        print('Welcome message failed: ' + repr(e))
+
 
     loop_task.start()
 
@@ -201,12 +211,16 @@ async def check_stock():
             headers = {'User-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0',
                        'Accept-Language': 'en-GB,en-US;q=0.7,en;q=0.3'}
             response = requests.get(url, headers = headers, timeout = 10).content
+
     except Exception as e:
         print('API request failed ' + repr(e))
         try:
-            await channelList[0].id.send('API request failed ' + repr(e))
+            for channel in channelList:
+                if channel.debug == True:
+                    await channel.id.send('API request failed ' + repr(e))
         except Exception as e:
             print('Fail notification failed: ' + repr(e))
+
         randTime = round(60 + random.uniform(0, 10))
         loop_task.change_interval(seconds = randTime)
         return

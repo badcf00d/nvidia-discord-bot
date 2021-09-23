@@ -192,11 +192,11 @@ async def parse_response(response):
 
 async def check_stock():
     global prevProducts, lastResponse, channelList
-    currentLocale = Locale.schedule[Locale.index]
-
-    print('\033[2J\033[3J\033[1;1HLoading...')
 
     try:
+        currentLocale = Locale.schedule[Locale.index]
+        print('\033[2J\033[3J\033[1;1HLoading...')
+
         # using curl seems to get blocked less often
         if which('curl') is not None:
             response = subprocess.check_output(['curl', '-s',
@@ -212,26 +212,25 @@ async def check_stock():
                        'Accept-Language': 'en-GB,en-US;q=0.7,en;q=0.3'}
             response = requests.get(url, headers = headers, timeout = 10).content
 
+        prevProducts[currentLocale] = await parse_response(response)
+        cycle_locale()
+        lastResponse = time.time()
+
+        randTime = round(5 + random.uniform(0, 5))
+        loop_task.change_interval(seconds = randTime)
+        print('\033[1G\033[2K' + f'{randTime}', end=' ', flush=True)
+
     except Exception as e:
         print('API request failed ' + repr(e))
         try:
             for channel in channelList:
                 if channel.debug == True:
-                    await channel.id.send('API request failed ' + repr(e))
+                    await channel.id.send('API request failed ' + repr(e) + '\n\nResponse:\n' + response)
         except Exception as e:
             print('Fail notification failed: ' + repr(e))
 
         randTime = round(60 + random.uniform(0, 10))
         loop_task.change_interval(seconds = randTime)
-        return
-
-    prevProducts[currentLocale] = await parse_response(response)
-    cycle_locale()
-    lastResponse = time.time()
-
-    randTime = round(5 + random.uniform(0, 5))
-    loop_task.change_interval(seconds = randTime)
-    print('\033[1G\033[2K' + f'{randTime}', end=' ', flush=True)
 
 
 client.run(TOKEN)

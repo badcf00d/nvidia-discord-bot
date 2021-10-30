@@ -229,7 +229,7 @@ async def check_stock():
         except Exception as e:
             print('Fail notification failed: ' + repr(e))
 
-        randTime = round(60 + random.uniform(0, 10))
+        randTime = round(10 + random.uniform(0, 5))
         loop_task.change_interval(seconds = randTime)
 
 

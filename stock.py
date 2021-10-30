@@ -227,7 +227,7 @@ async def check_stock():
         cycle_locale()
         lastResponse = time.time()
 
-        randTime = round(5 + random.uniform(0, 5))
+        randTime = round(7 + random.uniform(0, 1))
         loop_task.change_interval(seconds = randTime)
         print('\033[1G\033[2K' + f'{randTime}', end=' ', flush=True)
 
@@ -240,8 +240,7 @@ async def check_stock():
         except Exception as e:
             print('Fail notification failed: ' + repr(e))
 
-        randTime = round(10 + random.uniform(0, 5))
-        loop_task.change_interval(seconds = randTime)
+        loop_task.change_interval(seconds = 31)
 
 
 client.run(TOKEN)

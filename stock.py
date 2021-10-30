@@ -6,6 +6,7 @@ import random
 import requests
 import discord
 import asyncio
+import os
 from discord.ext import tasks
 from shutil import which
 from pathlib import Path
@@ -19,16 +20,26 @@ class Channel:
         self.debug = debug
         self.locales = locales
 
-TOKEN = open(Path(__file__).with_name('token.txt'),'r').readline()
-
 prevProducts = {}
 lastResponse = 0
 client = discord.Client()
 channelIds = []
 channelList = []
-for line in open(Path(__file__).with_name('channels.txt'),'r'):
-    fields = line.split(',')
-    channelIds.append(Channel(int(fields[0]), fields[1].lower() == 'true', fields[2]))
+
+if os.environ.get('BOT_TOKEN') is not None:
+    TOKEN = os.environ.get('BOT_TOKEN')
+else:
+    TOKEN = open(Path(__file__).with_name('token.txt'),'r').readline()
+
+if os.environ.get('BOT_CHANNELS') is not None:
+    channelFile = os.environ.get('BOT_CHANNELS')
+else:
+    channelFile = open(Path(__file__).with_name('channels.txt'),'r').read().replace('\r','').replace('\n','')
+
+for channel in channelFile.split(';'):
+    fields = channel.split(',')
+    if len(fields) >= 3:
+        channelIds.append(Channel(int(fields[0]), fields[1].lower() == 'true', fields[2]))
 
 
 #

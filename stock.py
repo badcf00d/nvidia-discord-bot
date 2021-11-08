@@ -69,6 +69,11 @@ print('\033[?1049h')
 @client.event
 async def on_ready():
     global channelList
+
+    if loop_task.is_running():
+        print("Discord.py reconnected itself")
+        return
+
     print('Logged in as {0.user}'.format(client))
     for signame in ('SIGINT', 'SIGTERM'):
         client.loop.add_signal_handler(getattr(signal, signame),
@@ -82,7 +87,6 @@ async def on_ready():
                 await channel.id.send('Hello!')
     except Exception as e:
         print('Welcome message failed: ' + repr(e))
-
 
     loop_task.start()
 

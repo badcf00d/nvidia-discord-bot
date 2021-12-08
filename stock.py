@@ -75,9 +75,11 @@ async def on_ready():
         return
 
     print('Logged in as {0.user}'.format(client))
-    for signame in ('SIGINT', 'SIGTERM'):
-        client.loop.add_signal_handler(getattr(signal, signame),
-                                lambda: asyncio.ensure_future(signal_handler()))
+
+    if os.name == 'posix':
+        for signame in ('SIGINT', 'SIGTERM'):
+            client.loop.add_signal_handler(getattr(signal, signame),
+                                    lambda: asyncio.ensure_future(signal_handler()))
     for channelId in channelIds:
         channelList.append(Channel(client.get_channel(channelId.id), channelId.debug, channelId.locales))
 
@@ -213,7 +215,7 @@ async def check_stock():
         print('\033[2J\033[3J\033[1;1HLoading...')
 
         # using curl seems to get blocked less often
-        if which('curl') is not None:
+        if which('curl') is not None and os.name == 'posix':
             response = subprocess.check_output(['curl', '-s',
                 f'https://api.store.nvidia.com/partner/v1/feinventory?skus={currentLocale}~NVGFT090~NVGFT080T~NVGFT080~NVGFT070T~NVGFT070~NVGFT060T~187&locale={currentLocale}',
                 '-H', 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0',

@@ -222,7 +222,7 @@ async def check_stock():
                 '--compressed'
                 ], shell=False)
         else:
-            url = f'https://api.store.nvidia.com/partner/v1/feinventory?skus={currentLocale}~NVGFT090~NVGFT080T~NVGFT080~NVGFT070T~NVGFT070~NVGFT060T~187&locale={currentLocale}',
+            url = f'https://api.store.nvidia.com/partner/v1/feinventory?skus={currentLocale}~NVGFT090~NVGFT080T~NVGFT080~NVGFT070T~NVGFT070~NVGFT060T~187&locale={currentLocale}'
             headers = {'User-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0',
                        'Accept-Language': 'en-GB,en-US;q=0.7,en;q=0.3'}
             response = requests.get(url, headers = headers, timeout = 10).content

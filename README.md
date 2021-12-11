@@ -12,6 +12,14 @@ pip3 install -r requirements.txt
 python3 stock.py
 ```
 
+#### Docker Setup
+- Install Docker: https://docs.docker.com/get-docker/
+- Install Docker-Compose: https://docs.docker.com/compose/install/
+- Place your bot token in token.txt, or BOT_TOKEN environmental variable
+- Place your channel ID in channels.txt, or BOT_CHANNELS environmental variable
+- To start: `docker-compose up`
+- To close: `docker-compose down`
+
 #### token.txt
 Just a text file with your bot token on the first line
 

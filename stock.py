@@ -135,20 +135,18 @@ def cycle_locale():
 
 
 def get_product_name(sku):
-    if 'NVGFT090_' in sku:
-        return 'RTX 3090'
-    elif 'NVGFT080T_' in sku:
-        return 'RTX 3080Ti'
-    elif 'NVGFT080_' in sku:
-        return 'RTX 3080'
-    elif 'NVGFT070T_' in sku:
-        return 'RTX 3070Ti'
-    elif 'NVGFT070_' in sku:
-        return 'RTX 3070'
-    elif 'NVGFT060T_' in sku:
-        return 'RTX 3060Ti'
-    else:
-        return sku
+    products = \
+        { 'NVGFT090_' : 'RTX 3090'
+        , 'NVGFT080T_': 'RTX 3080Ti'
+        , 'NVGFT080_' : 'RTX 3080'
+        , 'NVGFT070T_': 'RTX 3070Ti'
+        , 'NVGFT070_' : 'RTX 3070'
+        , 'NVGFT060T_': 'RTX 3060Ti'
+        }
+    for fragment, name in products:
+        if fragment in sku:
+            return name
+    return sku
 
 
 async def send_message(productName, product):

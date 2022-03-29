@@ -244,7 +244,7 @@ async def check_stock():
         try:
             for channel in channelList:
                 if channel.debug == True and (time.time() - lastResponse) > 60:
-                    await channel.id.send('API request failed ' + repr(e) + '\n\nResponse:\n' + response if response is not None else '(null)')
+                    await channel.id.send('API request failed ' + repr(e) + '\n\nResponse:\n' + repr(response) if response is not None else '(null)')
         except Exception as e:
             print('Fail notification failed: ' + repr(e))
 

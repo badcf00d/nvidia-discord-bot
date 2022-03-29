@@ -135,6 +135,8 @@ def cycle_locale():
 
 
 def get_product_name(sku):
+    if 'NVGFT090T_' in sku:
+        return 'RTX 3090Ti'
     if 'NVGFT090_' in sku:
         return 'RTX 3090'
     elif 'NVGFT080T_' in sku:
@@ -177,15 +179,15 @@ async def parse_response(response):
     responseData = response.decode('utf8').replace("'", '"')
     currentLocale = Locale.schedule[Locale.index]
     jsonDict = json.loads(responseData)
-    products = []
+    products = {}
 
     for product in jsonDict['listMap']:
         if 'NVGFT' in product['fe_sku']:
-            products.append(product)
+            products[product['fe_sku']] = product
     print('\033[1;1H\033[2K')
 
-    for i, product in enumerate(products):
-        productName = get_product_name(product['fe_sku'])
+    for sku, product in products.items():
+        productName = get_product_name(sku)
         url = product['product_url'].lower()
         state = product['is_active'].lower()
         print(productName, end=' ')
@@ -195,9 +197,9 @@ async def parse_response(response):
         else:
             print('\033[32;5m' + state + '\033[0m', end=' ')
 
-        if currentLocale in prevProducts:
-            prevUrl = prevProducts[currentLocale][i]['product_url'].lower()
-            prevState = prevProducts[currentLocale][i]['is_active'].lower()
+        if (currentLocale in prevProducts) and (sku in prevProducts[currentLocale]):
+            prevUrl = prevProducts[currentLocale][sku]['product_url'].lower()
+            prevState = prevProducts[currentLocale][sku]['is_active'].lower()
             if (state != prevState) or (state != 'false' and (url != prevUrl)):
                 await send_message(productName, product)
         elif state != 'false':

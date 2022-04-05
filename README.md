@@ -24,9 +24,9 @@ python3 stock.py
 Just a text file with your bot token on the first line
 
 #### channels.txt
- - Uses the format: `<channel id>,<receive debug messages>,<hyphen-seperated list of locales>;`, e.g:
+ - Uses the format: `<channel id>,<receive debug messages>,<colon-seperated list of locales>;`, e.g:
  ```
- 123123123123123,true,UK-FR-DE;
- 234234234234234,false,UK;
- 345345345345345,false,UK-FR;
+ 123123123123123,true,en-gb:FR:DE;
+ 234234234234234,false,en-gb;
+ 345345345345345,false,en-gb:FR;
  ```

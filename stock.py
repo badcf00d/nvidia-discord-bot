@@ -11,9 +11,10 @@ from discord.ext import tasks
 from shutil import which
 from pathlib import Path
 
+skus = ['NVGFT080', 'NVGFT090', 'NVGFT070', 'NVGFT060T', 'NVGFT070T', 'NVGFT080T', 'NVGFT090T']
 class Locale:
     index = 0
-    schedule = ['UK', 'DE', 'UK', 'FR', 'UK', None]
+    schedule = ['en-gb', 'DE', 'en-gb', 'FR', 'en-gb', None]
 class Channel:
     def __init__(self, id, debug, locales):
         self.id = id
@@ -92,7 +93,7 @@ async def on_ready():
 
     loop_task.start()
 
-@tasks.loop(seconds = 10)
+@tasks.loop(seconds = 5)
 async def loop_task():
     await check_stock()
 
@@ -136,19 +137,19 @@ def cycle_locale():
 
 def get_product_name(sku):
     if 'NVGFT090T_' in sku:
-        return 'RTX 3090Ti'
+        return 'RTX 3090 Ti'
     if 'NVGFT090_' in sku:
         return 'RTX 3090'
     elif 'NVGFT080T_' in sku:
-        return 'RTX 3080Ti'
+        return 'RTX 3080 Ti'
     elif 'NVGFT080_' in sku:
         return 'RTX 3080'
     elif 'NVGFT070T_' in sku:
-        return 'RTX 3070Ti'
+        return 'RTX 3070 Ti'
     elif 'NVGFT070_' in sku:
         return 'RTX 3070'
     elif 'NVGFT060T_' in sku:
-        return 'RTX 3060Ti'
+        return 'RTX 3060 Ti'
     else:
         return sku
 
@@ -157,7 +158,7 @@ async def send_message(productName, product):
     global channelList
     currentLocale = Locale.schedule[Locale.index]
 
-    message = '[' + currentLocale + '] ' + productName + ' '
+    message = '[' + currentLocale.replace('en-gb', 'UK') + '] ' + productName + ' '
     if 'true' in product['is_active']:
         message += 'In stock: '
     elif 'false' in product['is_active']:
@@ -174,20 +175,20 @@ async def send_message(productName, product):
         print('Stock alert failed: ' + repr(e))
 
 
-async def parse_response(response):
+async def parse_response(jsonDict):
     global channelList
-    responseData = response.decode('utf8').replace("'", '"')
     currentLocale = Locale.schedule[Locale.index]
-    jsonDict = json.loads(responseData)
     products = {}
 
-    for product in jsonDict['listMap']:
+    for product in jsonDict:
         if 'NVGFT' in product['fe_sku']:
             products[product['fe_sku']] = product
     print('\033[1;1H\033[2K')
 
     for sku, product in products.items():
         productName = get_product_name(sku)
+        if currentLocale == 'en-gb':
+            product['product_url'] = f'https://store.nvidia.com/en-gb/geforce/store/gpu/?page=1&limit=100&locale=en-gb&category=GPU&gpu={productName}&manufacturer=NVIDIA'.replace(' ', '%20')
         url = product['product_url'].lower()
         state = product['is_active'].lower()
         print(productName, end=' ')
@@ -210,32 +211,39 @@ async def parse_response(response):
 
 
 async def check_stock():
-    global prevProducts, lastResponse, channelList
+    global prevProducts, lastResponse, channelList, skus
 
     try:
         currentLocale = Locale.schedule[Locale.index]
+        jsonDict = {}
         print('\033[2J\033[3J\033[1;1HLoading...')
 
-        # using curl seems to get blocked less often
-        if which('curl') is not None and os.name == 'posix':
-            response = subprocess.check_output(['curl', '-s',
-                f'https://api.store.nvidia.com/partner/v1/feinventory?skus={currentLocale}~NVGFT090~NVGFT080T~NVGFT080~NVGFT070T~NVGFT070~NVGFT060T~187&locale={currentLocale}',
-                '-H', 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0',
-                '-H', 'Accept-Language: en-GB,en-US;q=0.7,en;q=0.3',
-                '--max-time', '10',
-                '--compressed'
-                ], shell=False)
-        else:
-            url = f'https://api.store.nvidia.com/partner/v1/feinventory?skus={currentLocale}~NVGFT090~NVGFT080T~NVGFT080~NVGFT070T~NVGFT070~NVGFT060T~187&locale={currentLocale}'
-            headers = {'User-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0',
-                       'Accept-Language': 'en-GB,en-US;q=0.7,en;q=0.3'}
-            response = requests.get(url, headers = headers, timeout = 10).content
+        for sku in skus:
+            # using curl seems to get blocked less often
+            if which('curl') is not None and os.name == 'posix':
+                response = subprocess.check_output(['curl', '-s',
+                    f'https://api.store.nvidia.com/partner/v1/feinventory?skus={sku}&locale={currentLocale}',
+                    '-H', 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0',
+                    '-H', 'Accept-Language: en-GB,en-US;q=0.7,en;q=0.3',
+                    '--max-time', '10',
+                    '--compressed'
+                    ], shell=False).decode().replace("'", '"')
+            else:
+                url = f'https://api.store.nvidia.com/partner/v1/feinventory?skus={sku}&locale={currentLocale}'
+                headers = {'User-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0',
+                        'Accept-Language': 'en-GB,en-US;q=0.7,en;q=0.3'}
+                response = requests.get(url, headers = headers, timeout = 10).content.decode().replace("'", '"')
 
-        prevProducts[currentLocale] = await parse_response(response)
+            if jsonDict:
+                jsonDict.extend(json.loads(response)['listMap'])
+            else:
+                jsonDict = json.loads(response)['listMap']
+
+        prevProducts[currentLocale] = await parse_response(jsonDict)
         cycle_locale()
         lastResponse = time.time()
 
-        randTime = round(7 + random.uniform(0, 1))
+        randTime = round(4 + random.uniform(0, 1))
         loop_task.change_interval(seconds = randTime)
         print('\033[1G\033[2K' + f'{randTime}', end=' ', flush=True)
 

@@ -22,10 +22,11 @@ class Channel:
         self.locales = locales
 
 prevProducts = {}
-lastResponse = 0
+lastResponse = time.time()
 client = discord.Client()
 channelIds = []
 channelList = []
+notifyOnStartup = os.environ.get('NOTIFY_ON_STARTUP') is not None
 
 if os.environ.get('BOT_TOKEN') is not None:
     TOKEN = os.environ.get('BOT_TOKEN')
@@ -48,18 +49,18 @@ for channel in channelFile.split(';'):
 #
 async def signal_handler():
     global channelList
-    print('\033[?1049l')
+    print('\033[1;1H\033[2K\033[?1049l')
     print('Logging out and closing')
     try:
         for channel in channelList:
             if channel.debug == True:
-                await channel.id.send('Bot shutting down')
+                await channel.id.send('Shutting down')
     except Exception:
         pass
     await client.close()
     asyncio.get_event_loop().stop()
 
-print('\033[?1049h')
+print('\033[?1049h\033[1;1H\033[2K')
 
 
 
@@ -91,6 +92,10 @@ async def on_ready():
     except Exception as e:
         print('Welcome message failed: ' + repr(e))
 
+    print('Waiting 61 seconds to start:')
+    for i in range(61):
+        print(str(i) + ', ', end='', flush=True)
+        await asyncio.sleep(1)
     loop_task.start()
 
 @tasks.loop(seconds = 5)
@@ -201,9 +206,9 @@ async def parse_response(jsonDict):
         if (currentLocale in prevProducts) and (sku in prevProducts[currentLocale]):
             prevUrl = prevProducts[currentLocale][sku]['product_url'].lower()
             prevState = prevProducts[currentLocale][sku]['is_active'].lower()
-            if (state != prevState) or (state != 'false' and (url != prevUrl)):
+            if ((state == 'true') and (state != prevState)) or (state == 'true' and (url != prevUrl)):
                 await send_message(productName, product)
-        elif state != 'false':
+        elif (notifyOnStartup) and (state == 'true'):
             await send_message(productName, product)
 
         print(product['product_url'])
@@ -248,11 +253,15 @@ async def check_stock():
         print('\033[1G\033[2K' + f'{randTime}', end=' ', flush=True)
 
     except Exception as e:
-        print('API request failed ' + repr(e))
+        print('API request failed:\n' + repr(e) + '\n\nResponse:\n' + (repr(response) if 'response' in locals() and response is not None else '(null)'))
         try:
             for channel in channelList:
                 if channel.debug == True and (time.time() - lastResponse) > 60:
-                    await channel.id.send('API request failed ' + repr(e) + '\n\nResponse:\n' + repr(response) if response is not None else '(null)')
+                    await channel.id.send('API request failed:\n' + repr(e) + '\n\nResponse:\n' + (repr(response) if 'response' in locals() and response is not None else '(null)'))
+                if channel.debug == True and (time.time() - lastResponse) > 300:
+                    await channel.id.send('No response received for 5 minutes, quitting')
+            if ((time.time() - lastResponse) > 300):
+                signal.raise_signal(signal.SIGINT)
         except Exception as e:
             print('Fail notification failed: ' + repr(e))
 

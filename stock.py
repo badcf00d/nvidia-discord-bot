@@ -260,11 +260,11 @@ async def check_stock():
                     await channel.id.send('API request failed:\n' + repr(e) + '\n\nResponse:\n' + (repr(response) if 'response' in locals() and response is not None else '(null)'))
                 if channel.debug == True and (time.time() - lastResponse) > 300:
                     await channel.id.send('No response received for 5 minutes, quitting')
-            if ((time.time() - lastResponse) > 300):
-                signal.raise_signal(signal.SIGINT)
         except Exception as e:
             print('Fail notification failed: ' + repr(e))
 
+        if ((time.time() - lastResponse) > 300):
+            signal.raise_signal(signal.SIGINT)
         loop_task.change_interval(seconds = 61)
 
 

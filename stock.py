@@ -203,15 +203,18 @@ async def parse_response(jsonDict):
         else:
             print('\033[32;5m' + state + '\033[0m', end=' ')
 
-        if (currentLocale in prevProducts) and (sku in prevProducts[currentLocale]):
-            prevUrl = prevProducts[currentLocale][sku]['product_url'].lower()
-            prevState = prevProducts[currentLocale][sku]['is_active'].lower()
-            if ((state == 'true') and (state != prevState)) or (state == 'true' and (url != prevUrl)):
+        if len(product['product_url']):
+            if (currentLocale in prevProducts) and (sku in prevProducts[currentLocale]):
+                prevUrl = prevProducts[currentLocale][sku]['product_url'].lower()
+                prevState = prevProducts[currentLocale][sku]['is_active'].lower()
+                if ((state == 'true') and (state != prevState)) or (state == 'true' and (url != prevUrl)):
+                    await send_message(productName, product)
+            elif (notifyOnStartup) and (state == 'true'):
                 await send_message(productName, product)
-        elif (notifyOnStartup) and (state == 'true'):
-            await send_message(productName, product)
 
-        print(product['product_url'])
+            print(product['product_url'])
+        else:
+            print('(No URL provided)')
     return products
 
 

@@ -11,7 +11,7 @@ from discord.ext import tasks
 from shutil import which
 from pathlib import Path
 
-skus = ['NVGFT080', 'NVGFT090', 'NVGFT070', 'NVGFT060T', 'NVGFT070T', 'NVGFT080T', 'NVGFT090T']
+skus = ['NVGFT080', 'NVGFT090', 'NVGFT070', 'NVGFT060T', 'NVGFT070T', 'NVGFT080T', 'NVGFT090T', 'NVGFT490']
 class Locale:
     index = 0
     schedule = ['en-gb', 'DE', 'en-gb', 'FR', 'en-gb', None]
@@ -93,9 +93,9 @@ async def on_ready():
         print('Welcome message failed: ' + repr(e))
 
     print('Waiting 61 seconds to start:')
-    for i in range(61):
-        print(str(i) + ', ', end='', flush=True)
-        await asyncio.sleep(1)
+    #for i in range(61):
+    #    print(str(i) + ', ', end='', flush=True)
+    #    await asyncio.sleep(1)
     loop_task.start()
 
 @tasks.loop(seconds = 5)
@@ -115,12 +115,11 @@ async def on_message(message):
         else:
             reply = 'Last response: ' + time.ctime(lastResponse) + '\n'
             for locale, products in prevProducts.items():
-                reply += locale + '\n'
-                for product in products:
-                    reply += get_product_name(product['fe_sku']) + ' '
+                reply += locale + ':\n'
+                for sku, product in products.items():
+                    reply += get_product_name(sku) + ' '
                     reply += product['is_active'] + ' '
                     reply += product['product_url'] + '\n'
-
             try:
                 await message.reply(reply)
             except Exception as e:
@@ -141,6 +140,8 @@ def cycle_locale():
 
 
 def get_product_name(sku):
+    if 'NVGFT490' in sku:
+        return 'RTX 4090'
     if 'NVGFT090T_' in sku:
         return 'RTX 3090 Ti'
     if 'NVGFT090_' in sku:
@@ -227,17 +228,19 @@ async def check_stock():
         print('\033[2J\033[3J\033[1;1HLoading...')
 
         for sku in skus:
+            if sku == 'NVGFT490':
+                print('foo')
             # using curl seems to get blocked less often
             if which('curl') is not None and os.name == 'posix':
                 response = subprocess.check_output(['curl', '-s',
-                    f'https://api.store.nvidia.com/partner/v1/feinventory?skus={sku}&locale={currentLocale}',
+                    f'https://api.store.nvidia.com/partner/v1/feinventory?status=1&skus={sku}&locale={currentLocale}',
                     '-H', 'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0',
                     '-H', 'Accept-Language: en-GB,en-US;q=0.7,en;q=0.3',
                     '--max-time', '10',
                     '--compressed'
                     ], shell=False).decode().replace("'", '"')
             else:
-                url = f'https://api.store.nvidia.com/partner/v1/feinventory?skus={sku}&locale={currentLocale}'
+                url = f'https://api.store.nvidia.com/partner/v1/feinventory?status=1&skus={sku}&locale={currentLocale}'
                 headers = {'User-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101 Firefox/91.0',
                         'Accept-Language': 'en-GB,en-US;q=0.7,en;q=0.3'}
                 response = requests.get(url, headers = headers, timeout = 10).content.decode().replace("'", '"')

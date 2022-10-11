@@ -120,10 +120,11 @@ async def on_message(message):
                     reply += get_product_name(sku) + ' '
                     reply += product['is_active'] + ' '
                     reply += product['product_url'] + '\n'
-            try:
-                await message.reply(reply)
-            except Exception as e:
-                print('Reply failed: ' + repr(e))
+                try:
+                    await message.reply(reply)
+                except Exception as e:
+                    print('Reply failed: ' + repr(e))
+                await asyncio.sleep(1)
 
 
 

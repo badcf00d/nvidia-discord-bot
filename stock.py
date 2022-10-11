@@ -93,9 +93,9 @@ async def on_ready():
         print('Welcome message failed: ' + repr(e))
 
     print('Waiting 61 seconds to start:')
-    #for i in range(61):
-    #    print(str(i) + ', ', end='', flush=True)
-    #    await asyncio.sleep(1)
+    for i in range(61):
+       print(str(i) + ', ', end='', flush=True)
+       await asyncio.sleep(1)
     loop_task.start()
 
 @tasks.loop(seconds = 5)

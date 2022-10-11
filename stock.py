@@ -228,8 +228,6 @@ async def check_stock():
         print('\033[2J\033[3J\033[1;1HLoading...')
 
         for sku in skus:
-            if sku == 'NVGFT490':
-                print('foo')
             # using curl seems to get blocked less often
             if which('curl') is not None and os.name == 'posix':
                 response = subprocess.check_output(['curl', '-s',

@@ -124,6 +124,7 @@ async def on_message(message):
                     await message.reply(reply)
                 except Exception as e:
                     print('Reply failed: ' + repr(e))
+                reply = ''
                 await asyncio.sleep(1)
 
 

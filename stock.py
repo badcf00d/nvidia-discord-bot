@@ -11,7 +11,7 @@ from discord.ext import tasks
 from shutil import which
 from pathlib import Path
 
-skus = ['NVGFT080', 'NVGFT090', 'NVGFT070', 'NVGFT060T', 'NVGFT070T', 'NVGFT080T', 'NVGFT090T', 'NVGFT490']
+skus = ['NVGFT080', 'NVGFT090', 'NVGFT070', 'NVGFT060T', 'NVGFT070T', 'NVGFT080T', 'NVGFT090T', 'NVGFT480', 'NVGFT490']
 class Locale:
     index = 0
     schedule = ['en-gb', 'DE', 'en-gb', 'FR', 'en-gb', None]
@@ -144,6 +144,8 @@ def cycle_locale():
 def get_product_name(sku):
     if 'NVGFT490' in sku:
         return 'RTX 4090'
+    if 'NVGFT480' in sku:
+        return 'RTX 4080'
     if 'NVGFT090T_' in sku:
         return 'RTX 3090 Ti'
     if 'NVGFT090_' in sku:

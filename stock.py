@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import subprocess
 import json
 import signal
@@ -23,7 +24,7 @@ class Channel:
 
 prevProducts = {}
 lastResponse = time.time()
-client = discord.Client()
+client = discord.Client(intents=discord.Intents.default())
 channelIds = []
 channelList = []
 notifyOnStartup = os.environ.get('NOTIFY_ON_STARTUP') is not None

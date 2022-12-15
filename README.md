@@ -11,6 +11,24 @@ pip3 install -r requirements.txt
 # Place your channel ID in channels.txt, or BOT_CHANNELS environmental variable
 python3 stock.py
 ```
+You may also want to setup a systemd service for it:
+```bash
+[Unit]
+Description=Nvidia Discord Bot
+Wants=network-online.target
+After=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=30
+User={a user that has access to the pip packages you installed above}
+ExecStart=/usr/bin/python3 ~/nvidia-discord-bot/stock.py
+
+[Install]
+WantedBy=multi-user.target
+```
 
 #### Docker Setup
 - Install Docker: https://docs.docker.com/get-docker/

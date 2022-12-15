@@ -13,6 +13,8 @@ python3 stock.py
 ```
 You may also want to setup a systemd service for it:
 ```bash
+sudo nano /etc/systemd/system/nvidia-discord-bot.service
+--------------------------------------------------------------------------
 [Unit]
 Description=Nvidia Discord Bot
 Wants=network-online.target
@@ -28,6 +30,9 @@ ExecStart=/usr/bin/python3 ~/nvidia-discord-bot/stock.py
 
 [Install]
 WantedBy=multi-user.target
+--------------------------------------------------------------------------
+sudo systemctl enable nvidia-discord-bot
+sudo systemctl start nvidia-discord-bot
 ```
 
 #### Docker Setup

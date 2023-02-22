@@ -15,7 +15,7 @@ from pathlib import Path
 skus = ['NVGFT080', 'NVGFT090', 'NVGFT070', 'NVGFT060T', 'NVGFT070T', 'NVGFT080T', 'NVGFT090T', 'NVGFT480', 'NVGFT490']
 class Locale:
     index = 0
-    schedule = ['en-gb', 'DE', 'en-gb', 'fr-fr', 'en-gb', None]
+    schedule = ['en-gb', 'de-de', 'en-gb', 'fr-fr', 'en-gb', None]
 class Channel:
     def __init__(self, id, debug, locales):
         self.id = id
@@ -198,8 +198,7 @@ async def parse_response(jsonDict):
 
     for sku, product in products.items():
         productName = get_product_name(sku)
-        if currentLocale == 'en-gb' or currentLocale == 'fr-fr':
-            product['product_url'] = f'https://store.nvidia.com/{currentLocale}/geforce/store/gpu/?page=1&limit=100&locale={currentLocale}&category=GPU&gpu={productName}&manufacturer=NVIDIA'.replace(' ', '%20')
+        product['product_url'] = f'https://store.nvidia.com/{currentLocale}/geforce/store/gpu/?page=1&limit=100&locale={currentLocale}&category=GPU&gpu={productName}&manufacturer=NVIDIA'.replace(' ', '%20')
         url = product['product_url'].lower()
         state = product['is_active'].lower()
         print(productName, end=' ')
